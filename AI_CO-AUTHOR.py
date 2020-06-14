@@ -17,9 +17,6 @@ class TextEditor:
     # Without any parameters, aitextgen() will download, cache, and load the 124M GPT-2 "small" model
     self.ai = aitextgen()
 
-    # AI SETTINGS
-    self.options_n = 3 # default value, how many possible answers to generate
-    self.max_length = 5 # default value, how many words to generate
     # Assigning root
     self.root = root
     # Title of the window
@@ -50,6 +47,12 @@ class TextEditor:
     # Button for loading the model
     self.model_btn = Button(master=self.settings_f,text="Load Model!",command=self.load_model)
     self.model_btn.pack(side=LEFT)
+    # Label for temperature
+    self.temp_lbl = Label(master=self.settings_f, text="Temperature: ")
+    self.temp_lbl.pack(side=LEFT)
+    # Spinbox for temperature
+    self.temp_sb = Spinbox(master=self.settings_f,from_=0, to_=10,increment=0.01,format="%.2f")
+    self.temp_sb.pack(side=LEFT)
     # Label for optons_n
     self.options_lbl = Label(self.settings_f, text="Options to generate: ")
     self.options_lbl.pack(side=LEFT)
@@ -62,13 +65,15 @@ class TextEditor:
     # Spinbox to select max_length
     self.max_length_sb = Spinbox(master=self.settings_f, from_=1, to_=999)
     self.max_length_sb.pack(side=LEFT)
-    # Setting default values for the spinboxes   
+    # Setting default values for the spinboxes
+    self.temp_sb.delete(0,END)
+    self.temp_sb.insert(0,1.0)   
     self.options_sb.delete(0,END)
-    self.options_sb.insert(0,self.options_n)
+    self.options_sb.insert(0,5)
     self.max_length_sb.delete(0,END)
-    self.max_length_sb.insert(0,self.max_length)
+    self.max_length_sb.insert(0,10)
     self.settings_f.pack(side=TOP)
-    
+
 
 
 
@@ -315,7 +320,7 @@ class TextEditor:
     # Binding Ctrl+v to paste funtion
     self.txtarea.bind("<Control-v>",self.paste)
     # Binding Ctrl+u to undo funtion
-    self.txtarea.bind("<Control-u>",self.undo)
+    self.txtarea.bind("<Control-z>",self.undo)
     # Binding Ctrl+Space to generate
     self.txtarea.bind("<Control-space>",self.generate)
 
@@ -332,12 +337,12 @@ class TextEditor:
       return
     model = self.model_txt.get()
     words_generated = len(self.ai.tokenizer.tokenize(prompt))# How many tokens the ai has generated so we can always generate max_length words more than the prompt.
-    answers = self.ai.generate(n=int(self.options_sb.get()),prompt=prompt,model=model, max_length= words_generated + int(self.max_length_sb.get()), return_as_list=True,seed=0)
+    answers = self.ai.generate(n=int(self.options_sb.get()),prompt=prompt,model=model, max_length= words_generated + int(self.max_length_sb.get()), return_as_list=True, temperature=1)
     # https://www.educba.com/tkinter-menu/
     self.aimenu.delete(0,END) # Clear the previous commands
     for option in answers:
       text = option[len(prompt):] # We need to cut off the front of the prompt, since we only care about the generated part
-      self.aimenu.add_command(label=text, command=partial(self._option_selected, text))
+      self.aimenu.add_command(label=text, command=partial(self._option_selected, text), font=("arial",15,"normal"))
     
     # Open the menu
     self.aimenu.tk_popup(x=int(self.root.winfo_x()), y=int(self.root.winfo_y())+int(self.root.winfo_height()) - int(self.options_sb.get())*self.aimenu.yposition(1))

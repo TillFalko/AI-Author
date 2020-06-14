@@ -15,7 +15,7 @@ class TextEditor:
   # Defining Constructor
   def __init__(self,root):
     # Without any parameters, aitextgen() will download, cache, and load the 124M GPT-2 "small" model
-    self.ai = aitextgen()
+    self.ai = aitextgen(model="gpt2-medium")
 
     # Assigning root
     self.root = root
@@ -39,7 +39,7 @@ class TextEditor:
     self.model_txt_lbl.pack(side=LEFT)
     # Entry for model selection
     self.model_txt = Entry(self.settings_f)
-    self.model_txt.insert(0, "DistilGPT-2")
+    self.model_txt.insert(0, "gpt2-medium")
     self.model_txt.pack(side=LEFT)
     # Button for model help
     self.model_hlp_btn = Button(master=self.settings_f,text="?",command=self.model_help)
@@ -335,13 +335,17 @@ class TextEditor:
     prompt = self.txtarea.get("1.0",END)[:-1] # Get the text and cut of the newline that is at the end for some reason
     if prompt == "":
       return
+    prompt = prompt.strip() # Remove leading and trailing whitespace, which messes up the removal of the prompt from generation later
     model = self.model_txt.get()
     words_generated = len(self.ai.tokenizer.tokenize(prompt))# How many tokens the ai has generated so we can always generate max_length words more than the prompt.
+    # print("WORDS GENERATED SO FAR", words_generated)
+    # print("TOKENIZED: ",self.ai.tokenizer.tokenize(prompt))
     answers = self.ai.generate(n=int(self.options_sb.get()),prompt=prompt,model=model, max_length= words_generated + int(self.max_length_sb.get()), return_as_list=True, temperature=1)
     # https://www.educba.com/tkinter-menu/
     self.aimenu.delete(0,END) # Clear the previous commands
     for option in answers:
       text = option[len(prompt):] # We need to cut off the front of the prompt, since we only care about the generated part
+      # print("CUT OFF: ", option[:len(prompt)])
       self.aimenu.add_command(label=text, command=partial(self._option_selected, text), font=("arial",15,"normal"))
     
     # Open the menu

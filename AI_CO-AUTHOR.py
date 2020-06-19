@@ -5,7 +5,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
 # Importing for Generation
-from aitextgen import aitextgen
+import gpt_2_simple
 from functools import partial # To pass the right argument to commands of the aimenu
 import webbrowser # to open https://huggingface.co/models via button press
 # Defining TextEditor Class
@@ -14,8 +14,9 @@ class TextEditor:
 
   # Defining Constructor
   def __init__(self,root):
-    # Without any parameters, aitextgen() will download, cache, and load the 124M GPT-2 "small" model
-    self.ai = aitextgen(model="gpt2-medium")
+    
+    self.session = gpt_2_simple.start_tf_sess()
+    gpt_2_simple.load_gpt2(self.session, run_name='run1')
 
     # Assigning root
     self.root = root
@@ -35,11 +36,11 @@ class TextEditor:
     # Creating the model input
     self.settings_f = Frame(self.root) # Container
     # Label for model selection
-    self.model_txt_lbl = Label(self.settings_f, text="Model: ")
+    self.model_txt_lbl = Label(self.settings_f, text="Gpt2-simple Model: ")
     self.model_txt_lbl.pack(side=LEFT)
     # Entry for model selection
     self.model_txt = Entry(self.settings_f)
-    self.model_txt.insert(0, "gpt2-medium")
+    self.model_txt.insert(0, "run1")
     self.model_txt.pack(side=LEFT)
     # Button for model help
     self.model_hlp_btn = Button(master=self.settings_f,text="?",command=self.model_help)
@@ -328,7 +329,7 @@ class TextEditor:
     webbrowser.open_new_tab("https://huggingface.co/models")
 
   def load_model(self):
-    self.ai = aitextgen(model=self.model_txt.get())
+    gpt_2_simple.load_gpt2(session, run_name=self.model_txt.get())
 
   # Defining the generate Function
   def generate(self,_key_stuff):
@@ -336,11 +337,16 @@ class TextEditor:
     if prompt == "":
       return
     prompt = prompt.strip() # Remove leading and trailing whitespace, which messes up the removal of the prompt from generation later
-    model = self.model_txt.get()
-    words_generated = len(self.ai.tokenizer.tokenize(prompt))# How many tokens the ai has generated so we can always generate max_length words more than the prompt.
-    print("WORDS GENERATED SO FAR", words_generated)
-    print("TOKENIZED: ",self.ai.tokenizer.tokenize(prompt))
-    answers = self.ai.generate(n=int(self.options_sb.get()),prompt=prompt,model=model, max_length= words_generated + int(self.max_length_sb.get()), return_as_list=True, temperature=1)
+    
+    words_generated = len(gpt_2_simple.encoder.Encoder.encode(prompt))
+    run_name = self.model_txt.get()
+    n_options = int(self.options_sb.get())
+    max_length = words_generated + int(self.max_length_sb.get())
+    temperature = int(self.temp_sb.get())
+    
+    # SPEEDUP TODO: Batch sizes in generate (up to 20)
+    answers = gpt_2_simple.generate(self.session,run_name=run_name,prefix=prompt, nsamples=n_options, length=max_length, temperature=temperature, return_as_list=True)
+    #answers = self.ai.generate(n=n_options,prompt=prompt,model=model, max_length= words_generated + int(self.max_length_sb.get()), return_as_list=True)
     # https://www.educba.com/tkinter-menu/
     self.aimenu.delete(0,END) # Clear the previous commands
     for option in answers:

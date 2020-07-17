@@ -14,23 +14,16 @@ class TextEditor:
 
   # Defining Constructor
   def __init__(self,root):
-    # Without any parameters, aitextgen() will download, cache, and load the 124M GPT-2 "small" model
-    self.ai = aitextgen(model="gpt2-medium")
-
     # Assigning root
     self.root = root
     # Title of the window
     self.root.title("AI CO-AUTHOR")
     # Window Geometry
-    self.root.geometry("1200x700+200+150")
+    self.root.geometry("1000x700+200+150")
     # Initializing filename
     self.filename = None
     # Declaring Title variable
     self.title = StringVar()
-    # Declaring Status variable
-    self.status = StringVar()
-
-    # AI Options
 
     # Creating the model input
     self.settings_f = Frame(self.root) # Container
@@ -39,7 +32,9 @@ class TextEditor:
     self.model_txt_lbl.pack(side=LEFT)
     # Entry for model selection
     self.model_txt = Entry(self.settings_f)
-    self.model_txt.insert(0, "gpt2-medium")
+
+    self.model_txt.insert(0, "gpt2") # <--- SET DEFAULT HERE
+
     self.model_txt.pack(side=LEFT)
     # Button for model help
     self.model_hlp_btn = Button(master=self.settings_f,text="?",command=self.model_help)
@@ -85,13 +80,6 @@ class TextEditor:
     # Calling Settitle Function
     self.settitle()
 
-    # Creating Statusbar
-    self.statusbar = Label(self.root,textvariable=self.status,font=("arial",15,"normal"),bd=2,relief=GROOVE)
-    # Packing status bar to root window
-    self.statusbar.pack(side=BOTTOM,fill=BOTH)
-    # Initializing Status
-    self.status.set("Welcome To Text Editor")
-
     # Creating Menubar
     self.menubar = Menu(self.root,font=("arial",15,"normal"),activebackground="skyblue")
     # Configuring menubar on root window
@@ -136,7 +124,7 @@ class TextEditor:
     # Cascading helpmenu to menubar
     self.menubar.add_cascade(label="Help", menu=self.helpmenu)
 
-  # Making the menu to select the options the ai generates
+   # Making the menu to select the options the ai generates
     self.aimenu = Menu(master=root, tearoff=0)
 
     # Creating Scrollbar
@@ -152,6 +140,11 @@ class TextEditor:
 
     # Calling shortcuts funtion
     self.shortcuts()
+
+    # Loading the first model
+    self.load_model()
+
+
 
   # Defining settitle function
   def settitle(self):
@@ -171,8 +164,6 @@ class TextEditor:
     self.filename = None
     # Calling settitle funtion
     self.settitle()
-    # updating status
-    self.status.set("New File Created")
 
   # Defining Open File Funtion
   def openfile(self,*args):
@@ -193,8 +184,6 @@ class TextEditor:
         infile.close()
         # Calling Set title
         self.settitle()
-        # Updating Status
-        self.status.set("Opened Successfully")
     except Exception as e:
       messagebox.showerror("Exception",e)
 
@@ -214,8 +203,6 @@ class TextEditor:
         outfile.close()
         # Calling Set title
         self.settitle()
-        # Updating Status
-        self.status.set("Saved Successfully")
       else:
         self.saveasfile()
     except Exception as e:
@@ -241,8 +228,6 @@ class TextEditor:
       self.filename = untitledfile
       # Calling Set title
       self.settitle()
-      # Updating Status
-      self.status.set("Saved Successfully")
     except Exception as e:
       messagebox.showerror("Exception",e)
 
@@ -283,8 +268,6 @@ class TextEditor:
         infile.close()
         # Calling Set title
         self.settitle()
-        # Updating Status
-        self.status.set("Undone Successfully")
       else:
         # Clearing Text Area
         self.txtarea.delete("1.0",END)
@@ -292,11 +275,12 @@ class TextEditor:
         self.filename = None
         # Calling Set title
         self.settitle()
-        # Updating Status
-        self.status.set("Undone Successfully")
     except Exception as e:
       messagebox.showerror("Exception",e)
-
+  # Defining ctrl-a select all
+  def selectall(self, *args):
+      # Select all text in txtarea
+      self.txtarea.tag_add('sel', '1.0', 'end')
   # Defining About Funtion
   def infoabout(self):
     messagebox.showinfo("About Text Editor","A Simple Text Editor\nCreated using Python.")
@@ -318,9 +302,11 @@ class TextEditor:
     # Binding Ctrl+c to copy funtion
     self.txtarea.bind("<Control-c>",self.copy)
     # Binding Ctrl+v to paste funtion
-    self.txtarea.bind("<Control-v>",self.paste)
+    #self.txtarea.bind("<Control-v>",self.paste)
     # Binding Ctrl+u to undo funtion
     self.txtarea.bind("<Control-z>",self.undo)
+    # Binding Ctrl+a to select all text
+    self.txtarea.bind("<Control-a>", self.selectall)
     # Binding Ctrl+Space to generate
     self.txtarea.bind("<Control-space>",self.generate)
 
@@ -328,7 +314,7 @@ class TextEditor:
     webbrowser.open_new_tab("https://huggingface.co/models")
 
   def load_model(self):
-    self.ai = aitextgen(model=self.model_txt.get())
+    self.ai = aitextgen(model=self.model_txt.get(), to_gpu=True)
 
   # Defining the generate Function
   def generate(self,_key_stuff):

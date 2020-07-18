@@ -7,7 +7,6 @@ from tkinter import filedialog
 # Importing for Generation
 from aitextgen import aitextgen
 from functools import partial # To pass the right argument to commands of the aimenu
-import webbrowser # to open https://huggingface.co/models via button press
 # Defining TextEditor Class
 class TextEditor:
 
@@ -68,9 +67,6 @@ class TextEditor:
     self.max_length_sb.delete(0,END)
     self.max_length_sb.insert(0,10)
     self.settings_f.pack(side=TOP)
-
-
-
 
 
     # Creating Titlebar
@@ -140,10 +136,6 @@ class TextEditor:
 
     # Calling shortcuts funtion
     self.shortcuts()
-
-    # Loading the first model
-    self.load_model()
-
 
 
   # Defining settitle function
@@ -311,13 +303,18 @@ class TextEditor:
     self.txtarea.bind("<Control-space>",self.generate)
 
   def model_help(self):
-    webbrowser.open_new_tab("https://huggingface.co/models")
+    self.txtarea.insert(1.0,"""\n\n Enter a valid gpt2-based model i.e. gpt2-medium. 
+    A full list of downloadable models can be found here: \nhttps://huggingface.co/models\n\m
+    Custom pytorch-based models can be installed by putting the containing folder into ./aitextgen""")
 
-  def load_model(self):
-    self.ai = aitextgen(model=self.model_txt.get(), to_gpu=True)
+
+  def load_model(self): 
+    self.ai = aitextgen(model="pure_s_torch", config="pure_s_torch", to_gpu=True)
 
   # Defining the generate Function
   def generate(self,_key_stuff):
+    if not self.ai: # If no model has been loaded yet
+      self.txtarea.insert(1.0,"{LOAD A MODEL BEFORE GENERATING}")
     prompt = self.txtarea.get("1.0",END)[:-1] # Get the text and cut of the newline that is at the end for some reason
     if prompt == "":
       return

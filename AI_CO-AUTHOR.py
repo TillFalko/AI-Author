@@ -10,7 +10,6 @@ from functools import partial # To pass the right argument to commands of the ai
 # Defining TextEditor Class
 class TextEditor:
 
-
   # Defining Constructor
   def __init__(self,root):
     # Assigning root
@@ -70,11 +69,11 @@ class TextEditor:
 
 
     # Creating Titlebar
-    self.titlebar = Label(self.root,textvariable=self.title,font=("arial",15,"normal"),bd=2,relief=GROOVE)
+    #self.titlebar = Label(self.root,textvariable=self.title,font=("arial",15,"normal"),bd=2,relief=GROOVE)
     # Packing Titlebar to root window
-    self.titlebar.pack(side=TOP,fill=BOTH)
+    #self.titlebar.pack(side=TOP,fill=BOTH)
     # Calling Settitle Function
-    self.settitle()
+    #self.settitle()
 
     # Creating Menubar
     self.menubar = Menu(self.root,font=("arial",15,"normal"),activebackground="skyblue")
@@ -305,16 +304,21 @@ class TextEditor:
   def model_help(self):
     self.txtarea.insert(1.0,"""\n\n Enter a valid gpt2-based model i.e. gpt2-medium. 
     A full list of downloadable models can be found here: \nhttps://huggingface.co/models\n\m
-    Custom pytorch-based models can be installed by putting the containing folder into ./aitextgen""")
+    Custom pytorch-based models can be installed by putting the containing folder into the same directory as this script.""")
 
 
   def load_model(self): 
-    self.ai = aitextgen(model="pure_s_torch", config="pure_s_torch", to_gpu=True)
+    model_folder = self.model_txt.get()
+    try:
+        self.ai = aitextgen(model=model_folder, config=model_folder)
+    except:
+        self.ai = aitextgen(model=model_folder)
 
   # Defining the generate Function
   def generate(self,_key_stuff):
-    if not self.ai: # If no model has been loaded yet
+    if not hasattr(self, "ai"): # If no model has been loaded yet
       self.txtarea.insert(1.0,"{LOAD A MODEL BEFORE GENERATING}")
+      return
     prompt = self.txtarea.get("1.0",END)[:-1] # Get the text and cut of the newline that is at the end for some reason
     if prompt == "":
       return
